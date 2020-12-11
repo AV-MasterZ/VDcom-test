@@ -10,6 +10,7 @@
     <version>1.0</version>
     <modules>
         <module>foobar</module>
+        <module>incremenator</module>
     </modules>
 
     <properties>
