@@ -11,6 +11,8 @@
     <modules>
         <module>foobar</module>
         <module>incremenator</module>
+        <module>converter</module>
+        <module>webapp</module>
     </modules>
 
     <properties>
