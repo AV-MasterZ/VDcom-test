@@ -8,28 +8,17 @@ import java.util.stream.IntStream;
 
 public class Incremenator {
 
-    private static RandomAccessFile randomAccessFile;
+    private static File out;
     private static int enteredNumber;
     private static List<Thread> threads;
-    private static int currentNumber;
 
-    public static void main(String... args) throws IOException {
-        createTempFile();
+    public static void main(String... args) {
+        out = FileWorker.createOutFile();
+        FileWorker.writeNumberInFile(out, 0);
         waitForNumberInput();
         createThreads(2);
         execute();
-        randomAccessFile.close();
-        System.out.format("Текущее число: '%d'", currentNumber);
-    }
-
-    private static void createTempFile() {
-        try {
-            File out = File.createTempFile("out", ".txt");
-            randomAccessFile = new RandomAccessFile(out, "rw");
-            writeNumberInFile(0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.format("Текущее число: '%d'", FileWorker.readFile(out));
     }
 
     private static void waitForNumberInput() {
@@ -51,7 +40,7 @@ public class Incremenator {
         threads = new ArrayList<>(numberOfThreads);
         if (numberOfThreads < 1) return;
         IntStream.range(0, numberOfThreads).forEach(n -> {
-            threads.add(new IncThread(n, enteredNumber, numberOfThreads));
+            threads.add(new IncThread(out, n, enteredNumber, numberOfThreads));
         });
     }
 
@@ -64,32 +53,5 @@ public class Incremenator {
                 e.printStackTrace();
             }
         });
-    }
-
-    public static void incrementAndWrite() {
-        int oldNumber = readFile();
-        int newNumber = oldNumber + 1;
-        System.out.format("Old number: %d, New number: %d, Thread id: %d\n", oldNumber, newNumber, Thread.currentThread().getId());
-        writeNumberInFile(newNumber);
-    }
-
-    public static synchronized int readFile() {
-        try {
-            randomAccessFile.seek(0);
-            String line = randomAccessFile.readLine();
-            currentNumber = Integer.parseInt(line);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return currentNumber;
-    }
-
-    private static synchronized void writeNumberInFile(int number) {
-        try {
-            randomAccessFile.setLength(0);
-            randomAccessFile.writeBytes(String.valueOf(number));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
