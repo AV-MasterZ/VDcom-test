@@ -7,9 +7,9 @@ import java.text.DecimalFormatSymbols;
 public class Equality {
 
     private Double leftValue;
-    private Unit leftUnit;
+    private final Unit leftUnit;
     private Double rightValue;
-    private Unit rightUnit;
+    private final Unit rightUnit;
 
     private Equality(Builder builder) {
         this.leftValue = builder.leftValue;
@@ -50,7 +50,9 @@ public class Equality {
         decimalFormat.setRoundingMode(RoundingMode.HALF_UP);
         String lValue = leftValue == null ? "?" : decimalFormat.format(leftValue);
         String rValue = rightValue == null ? "?" : decimalFormat.format(rightValue);
-        return String.format("%s %s = %s %s", lValue, leftUnit.getName(), rValue, rightUnit.getName());
+        String lUnitName = (leftUnit == null || leftUnit.getName() == null) ? "?" : leftUnit.getName();
+        String rUnitName = (rightUnit == null || rightUnit.getName() == null) ? "?" : rightUnit.getName();
+        return String.format("%s %s = %s %s", lValue, lUnitName, rValue, rUnitName);
     }
 
     public static class Builder {

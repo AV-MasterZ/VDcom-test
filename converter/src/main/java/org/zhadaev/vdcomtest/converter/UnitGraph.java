@@ -38,14 +38,19 @@ public class UnitGraph {
         return new UnitGraph(unitMap);
     }
 
-    public Equality calculateEquality(Equality equality) {
-        Unit knownUnit = units.get(equality.getLeftUnit().getName());
-        Unit unknownUnit = units.get(equality.getRightUnit().getName());
-        Double ratioUnknownToKnown = findRatio(knownUnit, unknownUnit, new ArrayList<>());
-        if (ratioUnknownToKnown != null) {
-            equality.setRightValue(ratioUnknownToKnown * equality.getLeftValue());
+    public Optional<Double> calculateRightValueOfEquality(Equality equality) {
+        if (equality.getRightValue() != null) {
+            return Optional.of(equality.getRightValue());
+        } else if (equality.getLeftValue() != null && equality.getLeftUnit() != null && equality.getRightUnit() != null) {
+            Unit knownUnit = units.get(equality.getLeftUnit().getName());
+            Unit unknownUnit = units.get(equality.getRightUnit().getName());
+            if (knownUnit == null || unknownUnit == null) return Optional.empty();
+            Double ratioUnknownToKnown = findRatio(knownUnit, unknownUnit, new ArrayList<>());
+            if (ratioUnknownToKnown != null) {
+                return Optional.of(ratioUnknownToKnown * equality.getLeftValue());
+            }
         }
-        return equality;
+        return Optional.empty();
     }
 
     private Double findRatio(Unit knownUnit, Unit unknownUnit, List<Unit> passedUnits) {

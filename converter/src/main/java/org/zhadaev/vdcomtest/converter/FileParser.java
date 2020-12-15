@@ -49,10 +49,8 @@ public class FileParser {
         Unit rightUnit = new Unit(rightPart[1]);
 
         return new Equality.Builder()
-                                .leftValue(leftValue)
-                                .leftUnit(leftUnit)
-                                .rightValue(rightValue)
-                                .rightUnit(rightUnit)
+                                .leftValue(leftValue).leftUnit(leftUnit)
+                                .rightValue(rightValue).rightUnit(rightUnit)
                                 .build();
     }
 }

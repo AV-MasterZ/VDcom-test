@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Converter {
@@ -20,7 +21,10 @@ public class Converter {
         List<Equality> notFilledEqualities = equalities.stream()
                                                         .filter(equality -> equality.getRightValue() == null)
                                                         .collect(Collectors.toList());
-        notFilledEqualities.forEach(unitGraph::calculateEquality);
+        notFilledEqualities.forEach(equality -> {
+            Optional<Double> rightValue = unitGraph.calculateRightValueOfEquality(equality);
+            rightValue.ifPresent(equality::setRightValue);
+        });
         writeResultFile(notFilledEqualities);
     }
 
