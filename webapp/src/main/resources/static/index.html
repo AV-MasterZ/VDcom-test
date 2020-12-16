@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Люди</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        h2, h3 {
+            text-align: center;
+        }
+        table, tr {
+            width: 100%;
+        }
+        table, th, td {
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 16px;
+        }
+        th, td {
+            border: 1px solid black;
+        }
+        .actions {
+            border: none;
+            text-align: left;
+        }
+        #container {
+            max-width: 1000px;
+            margin: auto;
+        }
+        #updatebtn {
+            display: block;
+            padding: 10px;
+            margin: auto;
+        }
+        .modalDialog {
+            position: fixed;
+            font-family: Arial, Helvetica, sans-serif;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 99999;
+            -webkit-transition: opacity 400ms ease-in;
+            -moz-transition: opacity 400ms ease-in;
+            transition: opacity 400ms ease-in;
+            display: none;
+            pointer-events: none;
+        }
+        .modalDialog:target {
+            display: block;
+            pointer-events: auto;
+        }
+        .modalDialog > #personForm {
+            width: 400px;
+            position: relative;
+            margin: 10% auto;
+            padding: 5px 20px 13px 20px;
+            border-radius: 10px;
+            background: #fff;
+        }
+        #close {
+            background: #606061;
+            color: #FFFFFF;
+            line-height: 25px;
+            position: absolute;
+            right: -12px;
+            text-align: center;
+            top: -10px;
+            width: 24px;
+            text-decoration: none;
+            font-weight: bold;
+            -webkit-border-radius: 12px;
+            -moz-border-radius: 12px;
+            border-radius: 12px;
+            -moz-box-shadow: 1px 1px 3px #000;
+            -webkit-box-shadow: 1px 1px 3px #000;
+            box-shadow: 1px 1px 3px #000;
+        }
+        #close:hover {
+            background: #00d9ff;
+        }
+        #personForm input, #personForm button {
+            display: block;
+            width: 90%;
+            height: 40px;
+            margin: 20px auto;
+        }
+        .hiddenInput {
+            position:absolute;
+            overflow: hidden;
+            display:block;
+            height:0px;
+            width:0px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"><div id="personsTable"></div></div>
+
+<script>
+
+    Vue.component('person-details', {
+        props: ['person'],
+        template:
+            `<tr :id="'row-' + person.id">
+                <td :id="'id-' + person.id">{{person.id}}</td>
+                <td :id="'lname-' + person.id">{{person.lastName}}</td>
+                <td :id="'fname-' + person.id">{{person.firstName}}</td>
+                <td :id="'mname-' + person.id">{{person.middleName}}</td>
+                <td :id="'pos-' + person.id">{{person.position}}</td>
+                <td class="actions">
+                    <a href="#openModal"><button @click="editPForm(person.id)" class="fa fa-edit"></button></a>
+                    <button @click="deletePers(person.id)" class="fa fa-trash"></button>
+                </td>
+            </tr>`,
+        methods: {
+            deletePers(id) {
+                this.$root.deletePerson(id);
+            },
+            editPForm(id) {
+                this.$root.editPersonForm(id);
+            }
+        }
+    });
+
+    Vue.component('persons-list', {
+        props: ['persons'],
+        template:
+            `<div class="persons">
+                <table id="ptable" style="margin-top: 10px;">
+                    <tr>
+                        <th>ID</th>
+                        <th>Фамилия</th>
+                        <th>Имя</th>
+                        <th>Отчество</th>
+                        <th>Должность</th>
+                    </tr>
+                    <person-details v-for="person in persons" :key="person.id" :person="person"/>
+                </table>
+            </div>`,
+        created: function() {
+            this.$http.get('/persons?limit=50').then(response =>
+                response.body._embedded.persons.forEach(person => this.persons.push(person))
+            )
+        }
+    });
+
+    var app = new Vue({
+        el: '#personsTable',
+        template:
+            `<div>
+                <h2>Список неизвестных людей<br></h2>
+                <a href="#openModal"><button @click="addPersonForm()" class="fa fa-plus"> Добавить</button></a>
+                <button onclick="document.getElementById('file').click()" class="fa fa-upload"> Загрузить CSV</button>
+                <div class="hiddenInput">
+                    <input ref="fileToUpload" type="file" id="file" name="file" onchange="document.getElementById('load').click()"/>
+                    <button @click="uploadCSV()" id="load" style="display: none" value='Загрузить'>u</button>
+                </div>
+                <persons-list :persons="persons"/>
+                <div id="openModal" class="modalDialog">
+                    <div id="personForm">
+                        <h3 id="actionName"></h3>
+                        <p v-if="errors.length">
+                            <b>Пожалуйста исправьте указанные ошибки:</b>
+                            <ul>
+                              <li v-for="error in errors">{{ error }}</li>
+                            </ul>
+                        </p>
+                        <a href="#" title="Закрыть" id="close"><i class="fa fa-times"></i></a>
+                        <input name="actiontype" type="hidden" id="atype"/>
+                        <input v-model="personid" name="personid" type="hidden" id="pid"/>
+                        <input v-model="lastName" name="lastName" type="text" placeholder="Фамилия" id="lname"/>
+                        <input v-model="firstName" name="firstName" type="text" placeholder="Имя" id="fname"/>
+                        <input v-model="middleName" name="middleName" type="text" placeholder="Отчество" id="mname"/>
+                        <input v-model="position" name="position" type="text" placeholder="Должность" id="pos"/>
+                        <button @click="checkForm" id="savebtn"></button>
+                    </div>
+                </div>
+            </div>`,
+        data: {
+            persons: [],
+            errors: [],
+            personid: null,
+            lastName: null,
+            firstName: null,
+            middleName: null,
+            position: null
+        },
+        methods: {
+            checkForm: function (e) {
+                if (this.lastName && this.firstName && this.position) {
+                    if (document.getElementById('atype').value === 'add') {
+                        this.addPerson();
+                    } else if (document.getElementById('atype').value === 'edit') {
+                        this.editPerson();
+                    }
+                    document.getElementById('close').click();
+                    setTimeout('window.location.reload(true)',100);
+                    return true;
+                }
+
+                this.errors = [];
+
+                if (!this.lastName) {
+                  this.errors.push('Требуется указать фамилию.');
+                }
+                if (!this.firstName) {
+                  this.errors.push('Требуется указать имя.');
+                }
+                if (!this.position) {
+                  this.errors.push('Требуется указать должность.');
+                }
+
+                e.preventDefault();
+            },
+            addPersonForm() {
+                this.personid = null;
+                this.lastName = null;
+                this.firstName = null;
+                this.middleName = null;
+                this.position = null;
+                document.getElementById('atype').value = "add";
+                document.getElementById('actionName').innerHTML = 'Добавить запись';
+                document.getElementById('savebtn').innerHTML = 'Сохранить';
+            },
+            addPerson() {
+                var lastNameInForm = document.getElementById('lname').value;
+                var firstNameInForm = document.getElementById('fname').value;
+                var middleNameInForm = document.getElementById('mname').value;
+                var positionInForm = document.getElementById('pos').value;
+
+                this.$http.post('/persons',
+                    {
+                    lastName: lastNameInForm,
+                    firstName: firstNameInForm,
+                    middleName: middleNameInForm,
+                    position: positionInForm
+                    });
+            },
+            editPerson() {
+                var lastNameInForm = document.getElementById('lname').value;
+                var firstNameInForm = document.getElementById('fname').value;
+                var middleNameInForm = document.getElementById('mname').value;
+                var positionInForm = document.getElementById('pos').value;
+
+                this.$http.put(`/persons/${this.personid}`,
+                    {
+                    lastName: lastNameInForm,
+                    firstName: firstNameInForm,
+                    middleName: middleNameInForm,
+                    position: positionInForm
+                    });
+            },
+            deletePerson(id) {
+                this.$http.delete(`/persons/${id}`);
+                var row = document.getElementById(`row-${id}`).rowIndex;
+                document.getElementById("ptable").deleteRow(row);
+            },
+            editPersonForm(id) {
+                this.personid = id;
+                this.lastName = document.getElementById(`lname-${id}`).innerHTML;
+                this.firstName = document.getElementById(`fname-${id}`).innerHTML;
+                this.middleName = document.getElementById(`mname-${id}`).innerHTML;
+                this.position = document.getElementById(`pos-${id}`).innerHTML;
+
+                document.getElementById('atype').value = "edit";
+                document.getElementById('actionName').innerHTML = 'Изменить запись';
+                document.getElementById('savebtn').innerHTML = 'Изменить';
+            },
+            uploadCSV() {
+                var file = this.$refs.fileToUpload.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                this.$http.post('/persons/upload', formData);
+                setTimeout('window.location.reload(true)',500);
+            }
+        }
+
+    });
+
+</script>
+</body>
+</html>

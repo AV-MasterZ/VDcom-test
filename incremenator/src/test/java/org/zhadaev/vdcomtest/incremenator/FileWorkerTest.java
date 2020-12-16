@@ -13,8 +13,11 @@ public class FileWorkerTest {
     @Test
     public void testCreateOutFile() {
         File file = FileWorker.createOutFile();
+        FileWorker.writeNumberInFile(file, 0);
 
         assertThat(file).exists();
+
+        file.delete();
     }
 
     @Test

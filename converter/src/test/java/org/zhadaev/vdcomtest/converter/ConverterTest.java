@@ -13,9 +13,9 @@ public class ConverterTest {
 
     @Test
     public void testMain() throws FileNotFoundException {
-        Converter.main("test-classes" + File.separator + "in.txt");
+        Converter.main("../test-classes/in.txt");
 
-        File result = new File("./target/result.txt");
+        File result = new File("./target/classes/result.txt");
         Scanner scanner = new Scanner(new FileReader(result));
 
         assertThat(scanner.nextLine()).isEqualTo("1 pyramid = 1.4 bar");

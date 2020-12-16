@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:hsqldb:mem:persons
+    username: SA
+    password:
+    driverClassName: org.hsqldb.jdbc.JDBCDriver
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none

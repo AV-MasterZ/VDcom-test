@@ -12,11 +12,9 @@ public class FileWorker {
 
     public static File createOutFile() {
         String path = FileWorker.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        for (int i = 1; i <= 2; i++) {
-            path = path.substring(0, path.lastIndexOf(File.separator));
-        }
+        path = path.substring(0, path.lastIndexOf(File.separator));
         path = path.concat(File.separator);
-        return new File(path + "out.txt");
+        return new File(path.concat("out.txt"));
     }
 
     public static void incrementAndWrite(File file) {

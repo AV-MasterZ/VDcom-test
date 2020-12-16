@@ -10,7 +10,7 @@ public class FileParserTest {
 
     @Test
     public void testParsingFile() {
-        String resource = FileParserTest.class.getClassLoader().getResource("in.txt").getFile();
+        String resource = getClass().getClassLoader().getResource("in.txt").getFile();
 
         List<Equality> equalities = FileParser.parseFile(resource);
         int filledEqualityCount = 0;
